@@ -1,6 +1,13 @@
 from fastapi import FastAPI
-from fastapi.params import Body
 from pydantic import BaseModel
+from random import randrange
+import random
+import string
+
+def create_ref_code():
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+
+
 
 app = FastAPI()
 
@@ -12,6 +19,30 @@ class Post(BaseModel):
     title: str
     content: str 
     published: bool = True
+
+# let's save our posts in memory
+my_post = [ 
+    {
+            "id": 1,
+            "title": "Blaise is his name",
+            "content": "Publication of facts about Blaise",
+            "published":"true",
+    },
+     {
+         "id": 2,
+        "title": "Favorite food",
+        "content": "I like pizza"
+
+    }
+    
+]
+
+def find_post(id): # lets find id of each post
+    for p in my_post:
+        if p['id'] == id: # id passed into the function
+            return p
+        return "Post id error."
+            
 
 @app.get("/")
 async def root():
@@ -28,7 +59,8 @@ async def student_info():
             return {
                 'message': 'Hello Blaise',
                 'age': 25,
-                'student_positions': new_student_position
+                'student_positions': new_student_position,
+                "data": my_post # it will serialize it to json
                 }
 
 
@@ -39,13 +71,23 @@ def get_post():
 
 
 #post request
-@app.post("/create-posts")
+@app.post("/posts")
 
 def create_posts(new_post: Post):
-    figure = 30
-    print(new_post)
+    post_dict = new_post.dict()
+    post_dict["id"] = randrange(0, 10000000)
+    my_post.append(post_dict)
+    print(my_post)
+    return {"data": post_dict}
 
-    return {"data": "new post"}
+
+@app.get("/posts/{id}") # the id field represent the patch param
+def get_post(id):
+    print(id)
+    return {"post_detail": f"Your new post {id}"}
+
+
+
 
 #1hr 18mins
 
