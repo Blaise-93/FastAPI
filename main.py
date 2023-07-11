@@ -1,9 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
 from random import randrange
 import random
 import string
-
 def create_ref_code():
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
 
@@ -21,7 +20,7 @@ class Post(BaseModel):
     published: bool = True
 
 # let's save our posts in memory
-my_post = [ 
+my_posts = [ 
     {
             "id": 1,
             "title": "Blaise is his name",
@@ -38,10 +37,10 @@ my_post = [
 ]
 
 def find_post(id): # lets find id of each post
-    for p in my_post:
+    for p in my_posts:
         if p['id'] == id: # id passed into the function
             return p
-        return "Post id error."
+       
             
 
 @app.get("/")
@@ -60,7 +59,7 @@ async def student_info():
                 'message': 'Hello Blaise',
                 'age': 25,
                 'student_positions': new_student_position,
-                "data": my_post # it will serialize it to json
+                "data": my_posts # it will serialize it to json
                 }
 
 
@@ -71,22 +70,41 @@ def get_post():
 
 
 #post request
-@app.post("/posts")
+@app.post("/posts", status_code=status.HTTP_201_CREATED) # status code changed
 
 def create_posts(new_post: Post):
     post_dict = new_post.dict()
     post_dict["id"] = randrange(0, 10000000)
-    my_post.append(post_dict)
-    print(my_post)
+    my_posts.append(post_dict)
+    print(my_posts) 
     return {"data": post_dict}
 
+""" get latest posts -> be careful in your api route naming
+be careful to avoid mismatch of api call whether it is get/post etc
 
+"""
+@app.get("/posts/latest")
+def get_latest_post():
+    post = my_posts[len(my_posts)-1]
+    print(post)
+    context = {"data" : post}
+    return context
+
+
+""" getting single post"""
 @app.get("/posts/{id}") # the id field represent the patch param
-def get_post(id):
-    print(id)
-    return {"post_detail": f"Your new post {id}"}
+def get_post(id: int): # convert it here
+    post = find_post(id)
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+            detail= f"post with id: {id} was not found")
+    return {"post_detail": post}
 
 
+
+@app.delete('/posts/{id}')
+def delete_post():
+    # deleting post
 
 
 #1hr 18mins
