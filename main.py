@@ -43,7 +43,7 @@ def find_post(id): # lets find id of each post
 
 def find_index_post(id):
     for index, post in enumerate(my_posts):
-        if post['id'] == id:
+        if post['id'] == int(id):
             """ return the specific post index lookup """
             return index
             
@@ -76,7 +76,6 @@ def get_post():
 
 #post request
 @app.post("/posts", status_code=status.HTTP_201_CREATED) # status code changed
-
 def create_posts(new_post: Post):
     post_dict = new_post.dict()
     post_dict["id"] = randrange(0, 10000000)
@@ -107,16 +106,17 @@ def get_post(id: int): # convert it here
 
 
 
-@app.delete('/posts/{id}')
-def delete_post():
+@app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(id: int):
     # deleting post
     # find th index in the array that has required ID
     # my_posts.pop(id)
     index = find_index_post(id)
-    delete_post =  my_posts.pop(index)
-    return {
-        "message": "post was successfully deleted "
-    }
+    if index == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    my_posts.pop(index)
+    # deleting something has to be retrieved via 204
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
     
 
 #1hr 18mins
