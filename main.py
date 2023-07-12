@@ -40,7 +40,12 @@ def find_post(id): # lets find id of each post
     for p in my_posts:
         if p['id'] == id: # id passed into the function
             return p
-       
+
+def find_index_post(id):
+    for index, post in enumerate(my_posts):
+        if post['id'] == id:
+            """ return the specific post index lookup """
+            return index
             
 
 @app.get("/")
@@ -105,7 +110,14 @@ def get_post(id: int): # convert it here
 @app.delete('/posts/{id}')
 def delete_post():
     # deleting post
-
+    # find th index in the array that has required ID
+    # my_posts.pop(id)
+    index = find_index_post(id)
+    delete_post =  my_posts.pop(index)
+    return {
+        "message": "post was successfully deleted "
+    }
+    
 
 #1hr 18mins
 
