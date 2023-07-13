@@ -18,7 +18,7 @@ class Post(BaseModel):
     title: str
     content: str 
     published: bool = True
-
+    
 # let's save our posts in memory
 my_posts = [ 
     {
@@ -54,24 +54,16 @@ async def root():
 
 @app.get('/login')
 async def student_info():
-    new_student_position = []
-    new_position = [90, 42, 40, 67, 89, 50, 100]
-    for position in new_position:
-        if position % 2 == 0:
-            new_student_position.append(position)
-            print(new_student_position)
-            return {
-                'message': 'Hello Blaise',
-                'age': 25,
-                'student_positions': new_student_position,
-                "data": my_posts # it will serialize it to json
-                }
+    generate_password = create_ref_code()
+    return {
+        'message': generate_password 
+     }
 
 
 # request comes in with path '/' and first one wins based in order
 @app.get('/post')
 def get_post():
-    return {'data': "Blaise will you be available tonight?"}
+    return {'data': my_posts}
 
 
 #post request
@@ -115,11 +107,26 @@ def delete_post(id: int):
     if index == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     my_posts.pop(index)
-    # deleting something has to be retrieved via 204
+    # deleting something has to be retrieved via 204 -> you must do it
     return Response(status_code=status.HTTP_204_NO_CONTENT)
     
+@app.put("/posts/{id}")
+# we adhere to schema models to avoid clients sending anything they want.
+def update_post(id: int, post: Post):
+    index = find_index_post(id)
+    if index == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"post with id: {id} does not exist")
+  
+    """ converts json obj to python dict """
+    post_dict = post.dict()
+    """ id of the post_dict should be parsed to the list array """
+    post_dict['id'] = id
+    """ updated post should be set to post_dict coming from front-end """
+    my_posts[index] = post_dict
+    return {"message": post_dict}
 
-#1hr 18mins
+#hr mins
 
 
 
