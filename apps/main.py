@@ -61,7 +61,7 @@ async def student_info():
 
 
 # request comes in with path '/' and first one wins based in order
-@app.get('/post')
+@app.get('/posts')
 def get_post():
     return {'data': my_posts}
 
