@@ -5,6 +5,7 @@ from fastapi import (
     HTTPException, 
     Depends
 )
+from passlib.context import CryptContext
 import os 
 from typing import Optional, List
 import time
@@ -12,7 +13,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-from .schema import PostCreate, ResponseUserPost
+from .schema import (
+    PostCreate,
+    ResponseUserPost,
+    AuthUsers,
+    UserResponse
+)
 import random
 import string
 import psycopg2
@@ -24,6 +30,7 @@ from .database import (
     get_db
 )
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated='auto')
 models.Base.metadata.create_all(bind=engine)
 
 def create_ref_code():
@@ -183,3 +190,20 @@ def update_post(id: int, updated_post: PostCreate, db:Session=Depends(get_db)):
     db.commit()
     
     return post_query.first()
+
+@app.post('/users-auth', status_code=status.HTTP_201_CREATED, 
+          response_model=UserResponse)
+def create_user(user:AuthUsers, db:Session = Depends(get_db)):
+    
+    # hash the pswd - user.password
+    hashed_pswd = pwd_context.hash(user.password)
+    user.password = hashed_pswd
+    # convert the user to dict and unpack it to the authUser
+    
+    new_user = models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    return new_user
+    

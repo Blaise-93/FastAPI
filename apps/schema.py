@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 """ 
@@ -34,9 +34,15 @@ class ResponseUserPost(PostBase):
          orm_mode = True
 
  
+class AuthUsers(BaseModel):
+     email : EmailStr
+     password: str
+     created_at: datetime
 
+        
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
     
-
-    
-    
-    
+    class Config:
+        orm_mode = True
