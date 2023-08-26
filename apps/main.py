@@ -6,12 +6,13 @@ from fastapi import (
     Depends
 )
 import os 
+from typing import Optional, List
 import time
 from dotenv import load_dotenv
 load_dotenv()
 
 
-from pydantic import BaseModel
+from .schema import PostCreate, ResponseUserPost
 import random
 import string
 import psycopg2
@@ -26,23 +27,13 @@ from .database import (
 models.Base.metadata.create_all(bind=engine)
 
 def create_ref_code():
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+    return ''.join(random.choices(string.ascii_lowercase + \
+                                  string.digits, k=20))
 
 
 
 app = FastAPI()
 
-
-""" 
-Your api has to be validated and constraints to avoid the clients 
-sending any gibberish
-"""
-# Handles and shapi API requests from clients side
-class Post(BaseModel):
-    title: str
-    content: str 
-    published: bool = True
-    
     
 PASSWORD_KEY = os.getenv('PASSWORD_KEY')
 HOST_NAME = os.getenv('HOST_NAME')
@@ -115,30 +106,27 @@ async def student_info():
 
 
 # request comes in with path '/' and first one wins based in order
-@app.get('/posts')
+@app.get('/posts', response_model=List[ResponseUserPost])
 def get_post(db:Session = Depends(get_db)):
-    #cursor.execute(""" SELECT * FROM post """)
-    #posts = cursor.fetchall()
-    
     posts = db.query(models.Post).all()
-    print(posts)
-    return {'data':posts}
+    return posts
 
 
 #post request
-@app.post("/posts", status_code=status.HTTP_201_CREATED) # status code changed
-def create_posts(post: Post, db: Session = Depends(get_db)):
+@app.post("/posts", 
+          status_code=status.HTTP_201_CREATED,
+          response_model=ResponseUserPost) # status code changed
+def create_posts(post: PostCreate, db: Session = Depends(get_db)):
 
     print(post.dict())    
     new_post = models.Post(
             **post.dict()
         )
     
-    #print(new_post)
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-    return {"data": new_post }
+    return new_post
 
 """ get latest posts -> be careful in your api route naming
 be careful to avoid mismatch of api call whether it is get/post etc
@@ -153,26 +141,21 @@ def get_latest_post():
 
 
 """ getting single post"""
-@app.get("/posts/{id}") # the id field represent the patch param
+@app.get("/posts/{id}", response_model=ResponseUserPost) # the id field represent the patch param
 def get_post(id: int, db:Session = Depends(get_db)): # convert it here 
    
     post = db.query(models.Post)\
         .filter(models.Post.id == id).first()
-    
-    print(post)
+        
     #post = find_post(id)
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
             detail= f"post with id: {id} was not found")
-    return {"post_detail": post}
-
+    return post
 
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db:Session=Depends(get_db) ):
-    # deleting post 4:25hr
-    # find th index in the array that has required ID
-    # my_posts.pop(id)
     
     delete_post = db.query(models.Post)\
         .filter(models.Post.id == str(id))
@@ -185,9 +168,9 @@ def delete_post(id: int, db:Session=Depends(get_db) ):
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
     
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=ResponseUserPost)
 # we adhere to schema models to avoid clients sending anything they want.
-def update_post(id: int, updated_post: Post, db:Session=Depends(get_db)):
+def update_post(id: int, updated_post: PostCreate, db:Session=Depends(get_db)):
     
     post_query = db.query(models.Post).\
         filter(models.Post.id == id)
@@ -199,6 +182,4 @@ def update_post(id: int, updated_post: Post, db:Session=Depends(get_db)):
     post_query.update(updated_post.dict(), synchronize_session=False)
     db.commit()
     
-    return {"data": post_query.first()}
-
-#hr mins
+    return post_query.first()
