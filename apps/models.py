@@ -2,6 +2,8 @@ from .database import Base
 from sqlalchemy import Column, Boolean, Integer, String
 from sqlalchemy.sql.sqltypes import DateTime, TIMESTAMP
 from sqlalchemy.sql.expression import text
+
+""" Handles Schema presentation of the API coming from backends """
 class Post(Base):
     __tablename__ = 'posts'
     

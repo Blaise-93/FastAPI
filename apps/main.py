@@ -37,10 +37,11 @@ app = FastAPI()
 Your api has to be validated and constraints to avoid the clients 
 sending any gibberish
 """
+# Handles and shapi API requests from clients side
 class Post(BaseModel):
     title: str
     content: str 
-    published: bool = True,
+    published: bool = True
     
     
 PASSWORD_KEY = os.getenv('PASSWORD_KEY')
@@ -99,9 +100,11 @@ def find_index_post(id):
 async def root():
     return {'message': 'Hello Blaise'}
 
-@app.get('/posts')
+@app.get('/sqlalchemy')
 def test_post(db:Session = Depends(get_db)):
-    return {'status': 'success '}
+    posts = db.query(models.Post).all()
+    print(posts)
+    return {'status': "successfully"}
 
 @app.get('/login')
 async def student_info():
@@ -113,22 +116,28 @@ async def student_info():
 
 # request comes in with path '/' and first one wins based in order
 @app.get('/posts')
-def get_post():
-    cursor.execute(""" SELECT * FROM post """)
-    posts = cursor.fetchall()
+def get_post(db:Session = Depends(get_db)):
+    #cursor.execute(""" SELECT * FROM post """)
+    #posts = cursor.fetchall()
+    
+    posts = db.query(models.Post).all()
     print(posts)
     return {'data':posts}
 
 
 #post request
 @app.post("/posts", status_code=status.HTTP_201_CREATED) # status code changed
-def create_posts(post: Post):
-    cursor.execute(
-        """ INSERT INTO post(title, content, published)
-            VALUES (%s, %s, %s) RETURNING * """,
-            (post.title, post.content, post.published))
-    new_post = cursor.fetchone()
-    conn.commit()
+def create_posts(post: Post, db: Session = Depends(get_db)):
+
+    print(post.dict())    
+    new_post = models.Post(
+            **post.dict()
+        )
+    
+    #print(new_post)
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
     return {"data": new_post }
 
 """ get latest posts -> be careful in your api route naming
@@ -145,52 +154,51 @@ def get_latest_post():
 
 """ getting single post"""
 @app.get("/posts/{id}") # the id field represent the patch param
-def get_post(id: int): # convert it here 
+def get_post(id: int, db:Session = Depends(get_db)): # convert it here 
+   
+    post = db.query(models.Post)\
+        .filter(models.Post.id == id).first()
     
-    #convert the int to string before passing
-   cursor.execute(""" SELECT * FROM Post where id = %s returning * """, str((id),))
-   new_post = cursor.fetchone()
-   print(new_post)
-   post = find_post(id)
-   if not post:
+    print(post)
+    #post = find_post(id)
+    if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
             detail= f"post with id: {id} was not found")
-   return {"post_detail": post}
+    return {"post_detail": post}
 
 
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
+def delete_post(id: int, db:Session=Depends(get_db) ):
     # deleting post 4:25hr
     # find th index in the array that has required ID
     # my_posts.pop(id)
     
-    cursor.execute(""" DELETE  FROM post WHERE id = %s RETURNING * """, str((id),))
-    delete_post = cursor.fetchone() 
-    conn.commit()
-    if delete_post == None: 
+    delete_post = db.query(models.Post)\
+        .filter(models.Post.id == str(id))
+
+    if delete_post.first() == None: 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
- 
+    
+    delete_post.delete(synchronize_session=False)
     # deleting something has to be retrieved via 204 -> you must do it
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
     
 @app.put("/posts/{id}")
 # we adhere to schema models to avoid clients sending anything they want.
-def update_post(id: int, post: Post):
-    cursor.execute("""UPDATE post SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",
-                   (post.title, post.content, post.published, str(id)))
-    updated_post = cursor.fetchone()
-    conn.commit()
+def update_post(id: int, updated_post: Post, db:Session=Depends(get_db)):
     
-    if updated_post == None:
+    post_query = db.query(models.Post).\
+        filter(models.Post.id == id)
+   
+    post = post_query.first()    
+    if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} does not exist")
-  
-    return {"message": updated_post}
+    post_query.update(updated_post.dict(), synchronize_session=False)
+    db.commit()
+    
+    return {"data": post_query.first()}
 
 #hr mins
-
-
-
-
-
