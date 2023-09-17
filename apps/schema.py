@@ -36,8 +36,11 @@ class ResponseUserPost(PostBase):
  
 class AuthUsers(BaseModel):
      email : EmailStr
-     password: str
+     id: int
      created_at: datetime
+     
+     class Config:
+        orm_mode = True 
 
         
 class UserResponse(BaseModel):
