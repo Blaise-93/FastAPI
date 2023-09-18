@@ -24,7 +24,8 @@ models.Base.metadata.create_all(bind=engine)
 
 def create_ref_code():
     return ''.join(random.choices(string.ascii_lowercase + \
-                                  string.digits, k=20))
+                                  string.digits, k=32))
+
 
 
 
