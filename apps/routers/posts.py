@@ -15,8 +15,7 @@ from apps.schema import (
     PostCreate,
     ResponseUserPost,
 )
-
-from .. import models
+from .. import models, oauth2
 from sqlalchemy.orm  import Session
 from apps.database import (
     get_db
@@ -39,9 +38,10 @@ def get_post(db:Session = Depends(get_db)):
           status_code=status.HTTP_201_CREATED,
           response_model=ResponseUserPost) # status code changed
 
-def create_posts(post: PostCreate, db: Session = Depends(get_db)):
+def create_posts(post: PostCreate, db: Session = Depends(get_db)
+                 ,user_id:int = Depends(oauth2.get_current_user)):
 
-    print(post.dict())    
+    print(user_id)    
     new_post = models.Post(
             **post.dict()
         )
