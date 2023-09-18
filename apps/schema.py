@@ -22,7 +22,7 @@ class PostCreate(PostBase):
     pass
 
 
-""" For response valdation cycle of what the frontend
+""" For response validation cycle of what the frontend
 needs. And you can modify it whichever way you want."""
 class ResponseUserPost(PostBase):
      id: int
@@ -37,15 +37,22 @@ class ResponseUserPost(PostBase):
 class AuthUsers(BaseModel):
      email : EmailStr
      id: int
-     created_at: datetime
-     
-     class Config:
-        orm_mode = True 
+     password: str
 
-        
+    
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
     
     class Config:
         orm_mode = True
+        
+        
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    
+    class Config:
+        orm_mode = True
+    
+    

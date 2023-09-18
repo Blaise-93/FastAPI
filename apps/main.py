@@ -18,7 +18,7 @@ from .database import (
     engine, 
     get_db
 )
-from apps.routers import posts, users
+from apps.routers import posts, users, auth
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -103,3 +103,4 @@ async def student_info():
 
 app.include_router(posts.router, prefix='/posts', tags=['Posts'])
 app.include_router(users.router, prefix='/users', tags=['Users'])
+app.include_router(auth.router, tags=['Authentication'])

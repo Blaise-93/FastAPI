@@ -31,7 +31,7 @@ def create_user(user:AuthUsers, db:Session = Depends(get_db)):
     # hash the pswd - user.password
     hashed_pswd = get_hash_password(user)
     user.password = hashed_pswd
-    # convert the user to dict and unpack it to the authUser
+    # convert the user to dict and unpack it to the authUser  b2aise4
     
     new_user = models.User(**user.dict())
     db.add(new_user)
@@ -40,7 +40,7 @@ def create_user(user:AuthUsers, db:Session = Depends(get_db)):
     
     return new_user
     
-@router.get('/{id}', response_model=AuthUsers)  
+@router.get('/{id}', response_model=UserResponse)  
 # Retrieve user
 def get_user(id:int, db:Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()
@@ -50,3 +50,5 @@ def get_user(id:int, db:Session = Depends(get_db)):
                             detail=f'User with id: {id} does not exist')
 
     return user
+
+
