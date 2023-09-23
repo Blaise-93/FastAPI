@@ -28,7 +28,8 @@ router = APIRouter(
 
 # request comes in with path '/' and first one wins based in order
 @router.get('/', response_model=List[ResponseUserPost])
-def get_post(db:Session = Depends(get_db)):
+def get_post(db:Session = Depends(get_db), 
+             current_user: int = Depends(oauth2.get_current_user)):
     posts = db.query(models.Post).all()
     return posts
 
@@ -59,7 +60,8 @@ be careful to avoid mismatch of api call whether it is get/post etc
 
 """ getting single post"""
 @router.get("/{id}", response_model=ResponseUserPost) # the id field represent the patch param
-def get_post(id: int, db:Session = Depends(get_db)): # convert it here 
+def get_post(id: int, db:Session = Depends(get_db),
+             current_user: int = Depends(oauth2.get_current_user)): # convert it here 
    
     post = db.query(models.Post)\
         .filter(models.Post.id == id).first()
@@ -72,8 +74,9 @@ def get_post(id: int, db:Session = Depends(get_db)): # convert it here
 
 
 @router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db:Session=Depends(get_db) ):
-    
+def delete_post(id: int, db:Session=Depends(get_db),  
+                current_user: int = Depends(oauth2.get_current_user)):
+  
     delete_post = db.query(models.Post)\
         .filter(models.Post.id == str(id))
 
@@ -87,11 +90,12 @@ def delete_post(id: int, db:Session=Depends(get_db) ):
     
 @router.put("/{id}", response_model=ResponseUserPost)
 # we adhere to schema models to avoid clients sending anything they want.
-def update_post(id: int, updated_post: PostCreate, db:Session=Depends(get_db)):
+def update_post(id: int, updated_post: PostCreate, db:Session=Depends(get_db),  
+                current_user: int = Depends(oauth2.get_current_user)):
     
     post_query = db.query(models.Post).\
         filter(models.Post.id == id)
-   
+    print(current_user.id)
     post = post_query.first()    
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
