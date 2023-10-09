@@ -29,6 +29,7 @@ needs. And you can modify it whichever way you want."""
 class ResponseUserPost(PostBase):
      id: int
      created_at: datetime
+     user_id: int
      
      """ stringify the dicts coming from orm -> sqlalchemy
      to real python dicts"""
