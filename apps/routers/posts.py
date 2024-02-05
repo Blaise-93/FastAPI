@@ -39,11 +39,13 @@ def get_post(db:Session = Depends(get_db),
           status_code=status.HTTP_201_CREATED,
           response_model=ResponseUserPost) # status code changed
 
-def create_posts(post: PostCreate, db: Session = Depends(get_db)
-                 ,user_id:int = Depends(oauth2.get_current_user)):
+# current_user = user_id
+def create_posts(post: PostCreate, db: Session = Depends(get_db),\
+    user_id:int = Depends(oauth2.get_current_user)):
 
     print(user_id)    
     new_post = models.Post(
+            owner_id=user_id,
             **post.dict()
         )
     
